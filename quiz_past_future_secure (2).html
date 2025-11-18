@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Plataforma Segura · Past & Future</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      font-size: 13px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+      color: #e5e7eb;
+    }
+
+    .app {
+      width: min(960px, 100% - 2rem);
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      padding: 1.5rem 2rem 2rem;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 80px;
+      border-radius: 14px;
+      background: #020617;
+      display: block;
+      margin-bottom: 1.25rem;
+    }
+
+    #quizContainer {
+      position: relative;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      color: #cbd5f5;
+      flex-wrap: wrap;
+    }
+
+    .topic-wrap {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .topic-pill {
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    .timer-pill {
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(248, 250, 252, 0.35);
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      line-height: 1.5;
+      margin: 0 0 0.75rem;
+      color: #f9fafb;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    @media (min-width: 720px) {
+      .options-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.6rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: radial-gradient(circle at top left,
+          rgba(56, 189, 248, 0.12),
+          rgba(15, 23, 42, 0.98));
+      cursor: pointer;
+      font-size: 0.95rem;
+      text-align: left;
+      transition: transform 0.08s ease, box-shadow 0.08s ease,
+        border-color 0.08s ease, background 0.12s ease;
+      outline: none;
+      color: #e5e7eb;
+    }
+
+    .option:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.9);
+      border-color: rgba(96, 165, 250, 0.9);
+    }
+
+    .option-selected {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.7);
+      background: radial-gradient(circle at top left,
+          rgba(34, 197, 94, 0.18),
+          rgba(15, 23, 42, 0.98));
+    }
+
+    .option-letter {
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding-top: 0.1rem;
+      color: #a5b4fc;
+      min-width: 2.1rem;
+    }
+
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-row button {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: linear-gradient(135deg, #0f172a, #020617);
+      padding: 0.5rem 1.3rem;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: background 0.1s ease, transform 0.08s ease,
+        box-shadow 0.08s ease, border-color 0.08s ease;
+    }
+
+    .nav-row button:hover:not(:disabled) {
+      background: radial-gradient(circle at top,
+          rgba(59, 130, 246, 0.12),
+          #020617);
+      border-color: rgba(59, 130, 246, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.9);
+    }
+
+    .nav-row button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .hint {
+      margin: 0;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .feedback {
+      font-size: 0.85rem;
+      margin: 0.3rem 0 0.1rem;
+      min-height: 1.2rem;
+    }
+
+    .results-title {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .results-summary {
+      font-size: 0.95rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .grade-highlight {
+      font-weight: 700;
+      color: #22c55e;
+    }
+
+    .results-details {
+      margin-top: 1rem;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      border-top: 1px solid rgba(55, 65, 81, 0.8);
+      padding-top: 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    .results-item {
+      padding: 0.4rem 0;
+      border-bottom: 1px dashed rgba(55, 65, 81, 0.7);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .results-item:last-child {
+      border-bottom: none;
+    }
+
+    .results-topic {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .badge-ok {
+      color: #22c55e;
+      font-weight: 600;
+    }
+
+    .badge-bad {
+      color: #f97373;
+      font-weight: 600;
+    }
+
+    .security-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top,
+          rgba(15, 23, 42, 0.98),
+          rgba(2, 6, 23, 0.98));
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      z-index: 9999;
+      padding: 2rem 1.5rem;
+      color: #f9fafb;
+    }
+
+    .security-overlay h1 {
+      margin-bottom: 0.4rem;
+      font-size: 1.3rem;
+    }
+
+    .security-overlay p {
+      margin: 0.2rem 0;
+      max-width: 520px;
+      font-size: 0.9rem;
+    }
+
+    .security-reason {
+      color: #f97373;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .security-overlay button {
+      margin-top: 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(250, 204, 21, 0.9);
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      padding: 0.55rem 1.6rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #1f2933;
+      box-shadow: 0 12px 30px rgba(250, 204, 21, 0.6);
+    }
+
+    .security-overlay small {
+      margin-top: 0.7rem;
+      font-size: 0.75rem;
+      color: #e5e7eb;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <div class="security-overlay" id="securityOverlay">
+    <h1>Plataforma bloqueada por seguridad</h1>
+    <p class="security-reason" id="securityReason">
+      Se ha detectado una acción no permitida.
+    </p>
+    <p>
+      El cuestionario se reiniciará desde el inicio con una nueva selección de
+      preguntas.
+    </p>
+    <button type="button" id="securityRestartBtn">Volver a la sala de inicio</button>
+    <small>
+      Mantén esta pestaña activa y evita copiar el contenido o realizar
+      capturas de pantalla para completar la actividad.
+    </small>
+  </div>
+
+  <div class="app">
+    <canvas id="quizCanvas" width="900" height="80"></canvas>
+    <div id="quizContainer"></div>
+  </div>
+
+  <script>
+    (() => {
+      const QUESTIONS = [
+        { id: 1, topic: "PAST",
+          text: "Yesterday at the airport, I ___ sad because I lost my boarding pass.",
+          options: ["feel", "am feeling", "was feeling", "felt"], correctIndex: 3 },
+        { id: 2, topic: "PAST",
+          text: "While we ___ at the bus stop, the bus arrived suddenly.",
+          options: ["were waiting", "waited", "wait", "are waiting"], correctIndex: 0 },
+        { id: 3, topic: "PAST",
+          text: "She ___ her passport on the table next to the lamp before leaving the room.",
+          options: ["puts", "is putting", "was putting", "put"], correctIndex: 3 },
+        { id: 4, topic: "PAST",
+          text: "I ___ music on my headphones when the plane landed.",
+          options: ["listened", "listen", "am listening", "was listening"], correctIndex: 3 },
+        { id: 5, topic: "PAST",
+          text: "After the long flight, they ___ very tired and went straight to bed.",
+          options: ["are", "were", "be", "was"], correctIndex: 1 },
+        { id: 6, topic: "PAST",
+          text: "He ___ in the hotel lobby when I called him last night.",
+          options: ["sat", "sits", "was sitting", "is sitting"], correctIndex: 2 },
+        { id: 7, topic: "PAST",
+          text: "Last summer, we ___ to Brazil for our vacation.",
+          options: ["go", "are going", "went", "were going"], correctIndex: 2 },
+        { id: 8, topic: "PAST",
+          text: "She ___ excited because she found a seat next to the window.",
+          options: ["felt", "is feeling", "feels", "was feeling"], correctIndex: 0 },
+        { id: 9, topic: "PAST",
+          text: "I ___ breakfast in the kitchen when my friend knocked on the door.",
+          options: ["have", "had", "am having", "was having"], correctIndex: 3 },
+        { id: 10, topic: "PAST",
+          text: "They ___ near the gate when the announcement started.",
+          options: ["stood", "are standing", "were standing", "stand"], correctIndex: 2 },
+        { id: 11, topic: "PAST",
+          text: "The train ___ at 10:00 p.m. yesterday, exactly on time.",
+          options: ["arrives", "was arriving", "arrived", "arrive"], correctIndex: 2 },
+        { id: 12, topic: "PAST",
+          text: "After the bus ride, we ___ hungry and looked for a restaurant.",
+          options: ["be", "are", "was", "were"], correctIndex: 3 },
+        { id: 13, topic: "PAST",
+          text: "He ___ his suitcase under the bed before checking out.",
+          options: ["putting", "was putting", "put", "puts"], correctIndex: 2 },
+        { id: 14, topic: "PAST",
+          text: "She ___ her phone while she was travelling on the crowded bus.",
+          options: ["lost", "loses", "was losing", "lose"], correctIndex: 0 },
+        { id: 15, topic: "PAST",
+          text: "The children ___ around the airport because they were bored.",
+          options: ["ran", "are running", "run", "were running"], correctIndex: 3 },
+        { id: 16, topic: "PAST",
+          text: "We ___ a photo of the city when the tour guide arrived.",
+          options: ["were taking", "take", "took", "are taking"], correctIndex: 0 },
+        { id: 17, topic: "PAST",
+          text: "I ___ next to the window on the plane because I wanted to sleep.",
+          options: ["sat", "sit", "was sitting", "am sitting"], correctIndex: 0 },
+        { id: 18, topic: "PAST",
+          text: "They ___ angry because the bus left without them.",
+          options: ["be", "are", "were", "was"], correctIndex: 2 },
+        { id: 19, topic: "PAST",
+          text: "She ___ for her bag when the taxi driver called her.",
+          options: ["looked", "was looking", "is looking", "looks"], correctIndex: 1 },
+        { id: 20, topic: "PAST",
+          text: "He ___ his ticket at home and had to return to get it.",
+          options: ["forgets", "is forgetting", "was forgetting", "forgot"], correctIndex: 3 },
+        { id: 21, topic: "PAST",
+          text: "The taxi ___ in front of the hotel, and we all got in.",
+          options: ["was stopping", "stopped", "stops", "stopping"], correctIndex: 1 },
+        { id: 22, topic: "PAST",
+          text: "We ___ dinner when the lights suddenly went out.",
+          options: ["were having", "have", "are having", "had"], correctIndex: 0 },
+        { id: 23, topic: "PAST",
+          text: "She ___ nervous before the flight because it was her first time flying.",
+          options: ["feels", "is feeling", "felt", "was feeling"], correctIndex: 2 },
+        { id: 24, topic: "PAST",
+          text: "They ___ the map while they walked through the old town.",
+          options: ["read", "was reading", "reads", "were reading"], correctIndex: 3 },
+        { id: 25, topic: "PAST",
+          text: "I ___ my camera when I slipped on the stairs.",
+          options: ["held", "hold", "am holding", "was holding"], correctIndex: 3 },
+        { id: 26, topic: "PAST",
+          text: "We ___ home very late after the long trip.",
+          options: ["are coming", "were coming", "came", "come"], correctIndex: 2 },
+        { id: 27, topic: "PAST",
+          text: "She ___ near the information desk when her name was called.",
+          options: ["stood", "stands", "was standing", "is standing"], correctIndex: 2 },
+        { id: 28, topic: "PAST",
+          text: "They ___ very happy during their vacation at the beach.",
+          options: ["are", "was", "be", "were"], correctIndex: 3 },
+        { id: 29, topic: "PAST",
+          text: "He ___ a taxi to the airport early in the morning.",
+          options: ["takes", "is taking", "took", "take"], correctIndex: 2 },
+        { id: 30, topic: "PAST",
+          text: "I ___ to music on the bus when it suddenly stopped.",
+          options: ["was listening", "listen", "am listening", "listened"], correctIndex: 0 },
+        { id: 31, topic: "FUTURE",
+          text: "“This suitcase is very heavy.” — “Don’t worry, I ___ help you.”",
+          options: ["will", "am going to", "help", "going"], correctIndex: 0 },
+        { id: 32, topic: "FUTURE",
+          text: "Look at those dark clouds. It ___ rain soon.",
+          options: ["rains", "is going to", "will", "going"], correctIndex: 1 },
+        { id: 33, topic: "FUTURE",
+          text: "She already bought her plane ticket. She ___ travel tomorrow morning.",
+          options: ["travels", "going", "will", "is going to"], correctIndex: 3 },
+        { id: 34, topic: "FUTURE",
+          text: "“Can you open the door?” — “Yes, I ___ open it.”",
+          options: ["going", "am going to", "open", "will"], correctIndex: 3 },
+        { id: 35, topic: "FUTURE",
+          text: "They checked the map. They ___ visit the museum first.",
+          options: ["visit", "are going to", "going", "will"], correctIndex: 1 },
+        { id: 36, topic: "FUTURE",
+          text: "I’m tired and sleepy. I ___ go to bed early today.",
+          options: ["am going to", "will", "going", "go"], correctIndex: 0 },
+        { id: 37, topic: "FUTURE",
+          text: "I think he ___ be sad after the long trip.",
+          options: ["will", "is", "going", "is going to"], correctIndex: 0 },
+        { id: 38, topic: "FUTURE",
+          text: "She is carrying her camera. She ___ take some photos at the beach.",
+          options: ["takes", "will", "is going to", "going"], correctIndex: 2 },
+        { id: 39, topic: "FUTURE",
+          text: "“The phone is ringing.” — “I ___ answer it.”",
+          options: ["am going to", "going", "answer", "will"], correctIndex: 3 },
+        { id: 40, topic: "FUTURE",
+          text: "They already packed their backpacks. They ___ leave soon.",
+          options: ["will", "leave", "are going to", "going"], correctIndex: 2 },
+        { id: 41, topic: "FUTURE",
+          text: "I think the hotel ___ be full tonight.",
+          options: ["going", "will", "be", "is going to"], correctIndex: 1 },
+        { id: 42, topic: "FUTURE",
+          text: "Be careful! You ___ fall off the stairs.",
+          options: ["are going to", "will", "going", "fall"], correctIndex: 0 },
+        { id: 43, topic: "FUTURE",
+          text: "She looks excited. She ___ meet her friend at the airport.",
+          options: ["meets", "going", "will", "is going to"], correctIndex: 3 },
+        { id: 44, topic: "FUTURE",
+          text: "Don’t worry. I ___ call you when I arrive.",
+          options: ["will", "going", "am going", "call"], correctIndex: 0 },
+        { id: 45, topic: "FUTURE",
+          text: "The bus is very close. We ___ catch it if we run now.",
+          options: ["catch", "will", "going", "are going to"], correctIndex: 3 },
+        { id: 46, topic: "FUTURE",
+          text: "I think you ___ enjoy this trip a lot.",
+          options: ["are going to", "enjoy", "going", "will"], correctIndex: 3 },
+        { id: 47, topic: "FUTURE",
+          text: "She is studying the map. She ___ find the hotel easily.",
+          options: ["finds", "going", "is going to", "will"], correctIndex: 2 },
+        { id: 48, topic: "FUTURE",
+          text: "We don’t have a plan yet. Maybe we ___ travel in July.",
+          options: ["will", "going", "are going to", "are travelling"], correctIndex: 0 },
+        { id: 49, topic: "FUTURE",
+          text: "He already has his train ticket. He ___ leave tonight.",
+          options: ["leaves", "will", "is going to", "going"], correctIndex: 2 },
+        { id: 50, topic: "FUTURE",
+          text: "They look nervous. They ___ talk to the manager soon.",
+          options: ["are going to", "talk", "going", "will"], correctIndex: 0 },
+        { id: 51, topic: "FUTURE",
+          text: "“My bag is too heavy.” — “I ___ carry it for you.”",
+          options: ["will", "carry", "am going to", "going"], correctIndex: 0 },
+        { id: 52, topic: "FUTURE",
+          text: "Look at the sky. The weather ___ change.",
+          options: ["is going to", "changes", "will", "going"], correctIndex: 0 },
+        { id: 53, topic: "FUTURE",
+          text: "I promise I ___ write to you every day.",
+          options: ["will", "write", "am going", "going"], correctIndex: 0 },
+        { id: 54, topic: "FUTURE",
+          text: "She is wearing her swimsuit. She ___ swim in the pool.",
+          options: ["swims", "is going to", "will", "going"], correctIndex: 1 },
+        { id: 55, topic: "FUTURE",
+          text: "I think they ___ be angry about the delay.",
+          options: ["are going to", "are", "going", "will"], correctIndex: 3 },
+        { id: 56, topic: "FUTURE",
+          text: "They are standing at the platform. They ___ take the next train.",
+          options: ["take", "going", "are going to", "will"], correctIndex: 2 },
+        { id: 57, topic: "FUTURE",
+          text: "I’m hungry. I ___ buy something at the café.",
+          options: ["will", "buy", "going", "am going to"], correctIndex: 3 },
+        { id: 58, topic: "FUTURE",
+          text: "The taxi driver is driving very fast. He ___ arrive early.",
+          options: ["arrives", "going", "is going to", "will"], correctIndex: 2 },
+        { id: 59, topic: "FUTURE",
+          text: "The weather is good. We ___ walk to the hotel.",
+          options: ["are going to", "walk", "going", "will"], correctIndex: 0 },
+        { id: 60, topic: "FUTURE",
+          text: "I think this trip ___ make you very happy.",
+          options: ["is going to", "makes", "going", "will"], correctIndex: 3 },
+      ];
+
+      const TOTAL_SHOWN = 25;
+      const SECONDS_PER_QUESTION = 4 * 60; // 4 minutos
+
+      let currentQuestions = [];
+      let currentIndex = 0;
+      let answers = [];
+      let quizFinished = false;
+      let securityTriggered = false;
+
+      let timerInterval = null;
+      let remainingSeconds = 0;
+
+      const quizContainer = document.getElementById("quizContainer");
+      const canvas = document.getElementById("quizCanvas");
+      const securityOverlay = document.getElementById("securityOverlay");
+      const securityReason = document.getElementById("securityReason");
+      const securityRestartBtn = document.getElementById("securityRestartBtn");
+
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      }
+
+      function topicLabel(topic) {
+        return topic === "PAST"
+          ? "Past Simple vs. Past Continuous"
+          : "Will vs. Going To";
+      }
+
+      function clearTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+
+      function formatTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      }
+
+      function updateTimerLabel() {
+        const label = document.getElementById("timerLabel");
+        if (!label) return;
+        label.textContent = formatTime(remainingSeconds);
+      }
+
+      function startTimer() {
+        clearTimer();
+        remainingSeconds = SECONDS_PER_QUESTION;
+        updateTimerLabel();
+        timerInterval = setInterval(() => {
+          remainingSeconds--;
+          if (remainingSeconds <= 0) {
+            clearTimer();
+            handleTimeUp();
+          } else {
+            updateTimerLabel();
+          }
+        }, 1000);
+      }
+
+      function handleTimeUp() {
+        if (securityTriggered || quizFinished) return;
+        if (currentIndex === currentQuestions.length - 1) {
+          finishQuiz();
+        } else {
+          currentIndex++;
+          renderCurrentQuestion(false);
+          updateCanvas();
+        }
+      }
+
+      function renderLobby() {
+        quizFinished = false;
+        securityTriggered = false;
+        currentQuestions = [];
+        answers = [];
+        currentIndex = 0;
+        clearTimer();
+
+        quizContainer.innerHTML = `
+          <div style="text-align:center; padding:1rem 0 0.5rem;">
+            <h2 class="results-title">Sala de inicio · Grammar Security Quiz</h2>
+            <p class="results-summary">
+              Este examen selecciona <strong>${TOTAL_SHOWN} preguntas aleatorias</strong> de un banco de 60,
+              sobre los temas:
+              <br><strong>Past Simple vs. Past Continuous</strong> y
+              <strong>Will vs. Going To</strong>.
+            </p>
+            <p class="hint">
+              Tienes <strong>4 minutos por pregunta</strong>. Si se acaba el tiempo,
+              la plataforma pasa automáticamente a la siguiente pregunta.
+              Cambiar de pestaña, copiar el texto o abrir el menú contextual
+              reinicia el examen por seguridad.
+            </p>
+            <div class="nav-row" style="justify-content:center; margin-top:1rem;">
+              <button type="button" id="startBtn">Iniciar examen</button>
+            </div>
+          </div>
+        `;
+        updateCanvas();
+
+        const startBtn = document.getElementById("startBtn");
+        if (startBtn) {
+          startBtn.addEventListener("click", () => {
+            startQuiz();
+          });
+        }
+      }
+
+      function startQuiz() {
+        quizFinished = false;
+        securityTriggered = false;
+        currentIndex = 0;
+        answers = [];
+        clearTimer();
+
+        const copy = QUESTIONS.slice();
+        shuffle(copy);
+        const picked = copy.slice(0, TOTAL_SHOWN);
+
+        // Barajar opciones internamente para que la respuesta correcta quede en posición aleatoria
+        currentQuestions = picked.map((q) => {
+          const idxs = [0, 1, 2, 3];
+          shuffle(idxs);
+          const newOptions = idxs.map((i) => q.options[i]);
+          const newCorrectIndex = idxs.indexOf(q.correctIndex);
+          return {
+            ...q,
+            options: newOptions,
+            correctIndex: newCorrectIndex,
+          };
+        });
+
+        renderCurrentQuestion(false);
+        updateCanvas();
+      }
+
+      function renderCurrentQuestion(keepTimer) {
+        const q = currentQuestions[currentIndex];
+
+        let optionsHtml = "";
+        q.options.forEach((opt, idx) => {
+          const isSelected = answers[currentIndex] === idx;
+          optionsHtml += `
+            <button type="button"
+              class="option ${isSelected ? "option-selected" : ""}"
+              data-index="${idx}">
+              <span class="option-letter">${String.fromCharCode(
+                65 + idx
+              )})</span>
+              <span>${opt}</span>
+            </button>
+          `;
+        });
+
+        quizContainer.innerHTML = `
+          <div class="status-row">
+            <div>Pregunta ${currentIndex + 1} de ${currentQuestions.length}</div>
+            <div class="topic-wrap">
+              <div class="timer-pill">⏱ <span id="timerLabel"></span></div>
+              <div class="topic-pill">
+                Tema: ${topicLabel(q.topic)}
+              </div>
+            </div>
+          </div>
+          <h2 class="question-text">${q.text}</h2>
+          <div class="options-grid">
+            ${optionsHtml}
+          </div>
+          <div class="nav-row">
+            <button type="button" id="prevBtn" ${
+              currentIndex === 0 ? "disabled" : ""
+            }>Anterior</button>
+            <button type="button" id="nextBtn">
+              ${
+                currentIndex === currentQuestions.length - 1
+                  ? "Finalizar"
+                  : "Siguiente"
+              }
+            </button>
+          </div>
+          <p id="feedback" class="feedback"></p>
+          <p class="hint">
+            Haz clic en la opción correcta. Inmediatamente sabrás si tu respuesta es
+            correcta o incorrecta. La nota final se mostrará al terminar
+            (escala 0,0 – 5,0). Dispone de 4 minutos por pregunta. Cambiar de pestaña,
+            copiar el contenido o abrir el menú contextual reinicia el cuestionario
+            por seguridad.
+          </p>
+        `;
+
+        const feedbackEl = document.getElementById("feedback");
+        const optionButtons = quizContainer.querySelectorAll(".option");
+
+        optionButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const index = Number(btn.dataset.index);
+            answers[currentIndex] = index;
+
+            // Actualizar estilos de selección sin re-renderizar
+            optionButtons.forEach((b) =>
+              b.classList.remove("option-selected")
+            );
+            btn.classList.add("option-selected");
+
+            // Feedback inmediato
+            if (feedbackEl) {
+              const ok = index === q.correctIndex;
+              feedbackEl.textContent = ok
+                ? "✔ Tu respuesta es correcta."
+                : "✘ Tu respuesta es incorrecta.";
+              feedbackEl.style.color = ok ? "#22c55e" : "#f97373";
+            }
+
+            updateCanvas();
+          });
+        });
+
+        document.getElementById("prevBtn").addEventListener("click", () => {
+          if (currentIndex > 0) {
+            currentIndex--;
+            renderCurrentQuestion(false);
+            updateCanvas();
+          }
+        });
+
+        document.getElementById("nextBtn").addEventListener("click", () => {
+          if (currentIndex === currentQuestions.length - 1) {
+            finishQuiz();
+          } else {
+            currentIndex++;
+            renderCurrentQuestion(false);
+            updateCanvas();
+          }
+        });
+
+        if (!keepTimer) {
+          remainingSeconds = SECONDS_PER_QUESTION;
+          updateTimerLabel();
+          startTimer();
+        } else {
+          updateTimerLabel();
+        }
+
+        // Si ya había respuesta guardada, mostrar feedback correspondiente
+        if (answers[currentIndex] != null && feedbackEl) {
+          const ok = answers[currentIndex] === q.correctIndex;
+          feedbackEl.textContent = ok
+            ? "✔ Tu respuesta es correcta."
+            : "✘ Tu respuesta es incorrecta.";
+          feedbackEl.style.color = ok ? "#22c55e" : "#f97373";
+        }
+      }
+
+      function finishQuiz() {
+        quizFinished = true;
+        clearTimer();
+
+        let correct = 0;
+        currentQuestions.forEach((q, i) => {
+          if (answers[i] === q.correctIndex) correct++;
+        });
+
+        const total = currentQuestions.length;
+        const grade = ((correct / total) * 5).toFixed(1);
+        const gradeComma = grade.replace(".", ",");
+
+        let detailsHtml = "";
+        currentQuestions.forEach((q, i) => {
+          const ok = answers[i] === q.correctIndex;
+          const answered =
+            answers[i] != null
+              ? String.fromCharCode(65 + answers[i])
+              : "—";
+          const correctLetter = String.fromCharCode(65 + q.correctIndex);
+
+          detailsHtml += `
+            <div class="results-item">
+              <div>
+                <div>#${i + 1} · ${
+            q.text.length > 65 ? q.text.slice(0, 65) + "..." : q.text
+          }</div>
+                <div class="results-topic">
+                  Tema: ${topicLabel(q.topic)}
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div class="${ok ? "badge-ok" : "badge-bad"}">
+                  ${ok ? "Correcta" : "Incorrecta"}
+                </div>
+                <div style="font-size:0.75rem;">
+                  Marcaste: ${answered} · Correcta: ${correctLetter}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        quizContainer.innerHTML = `
+          <h2 class="results-title">Resultados del cuestionario</h2>
+          <p class="results-summary">
+            Respuestas correctas:
+            <span class="grade-highlight">${correct} / ${total}</span>
+          </p>
+          <p class="results-summary">
+            Nota final:
+            <span class="grade-highlight">${grade} / 5.0</span>
+            &nbsp;(≈ <span class="grade-highlight">${gradeComma} / 5,0</span>)
+          </p>
+          <div class="nav-row">
+            <button type="button" id="retryBtn">
+              Volver a la sala de inicio
+            </button>
+          </div>
+          <div class="results-details">
+            ${detailsHtml}
+          </div>
+        `;
+
+        document.getElementById("retryBtn").addEventListener("click", () => {
+          renderLobby();
+        });
+
+        updateCanvas();
+      }
+
+      function updateCanvas() {
+        if (!canvas.getContext) return;
+        const ctx = canvas.getContext("2d");
+
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+        bgGrad.addColorStop(0, "#020617");
+        bgGrad.addColorStop(1, "#020617");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = "#e5e7eb";
+        ctx.font = "bold 20px system-ui";
+        ctx.fillText("Grammar Security Quiz", 24, 30);
+
+        ctx.font = "13px system-ui";
+        ctx.fillStyle = "#9ca3af";
+        ctx.fillText(
+          "Past Simple vs Past Continuous · Will vs Going To",
+          24,
+          50
+        );
+
+        const total = currentQuestions.length || TOTAL_SHOWN;
+        const answered = answers.filter((a) => a !== undefined).length;
+        const progress = quizFinished || total === 0 ? (quizFinished ? 1 : 0) : answered / total;
+
+        const barX = 24;
+        const barY = 60;
+        const barWidth = w - 48;
+        const barHeight = 12;
+
+        ctx.save();
+        ctx.fillStyle = "#111827";
+        if (ctx.roundRect) {
+          ctx.beginPath();
+          ctx.roundRect(barX, barY, barWidth, barHeight, 6);
+          ctx.fill();
+        } else {
+          ctx.fillRect(barX, barY, barWidth, barHeight);
+        }
+
+        const progGrad = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+        progGrad.addColorStop(0, "#38bdf8");
+        progGrad.addColorStop(1, "#22c55e");
+
+        const pw = barWidth * progress;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(barX, barY, pw, barHeight, 6);
+          ctx.fillStyle = progGrad;
+          ctx.fill();
+        } else {
+          ctx.fillStyle = progGrad;
+          ctx.fillRect(barX, barY, pw, barHeight);
+        }
+        ctx.restore();
+      }
+
+      function triggerSecurityBreach(reason) {
+        if (securityTriggered) return;
+        securityTriggered = true;
+        clearTimer();
+        securityReason.textContent = reason;
+        securityOverlay.style.display = "flex";
+      }
+
+      window.addEventListener("blur", () => {
+        triggerSecurityBreach("Cambio de ventana o pestaña detectado.");
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          triggerSecurityBreach(
+            "La pestaña dejó de estar visible durante la prueba."
+          );
+        }
+      });
+
+      document.addEventListener("copy", (e) => {
+        e.preventDefault();
+        triggerSecurityBreach("Intento de copiar el contenido detectado.");
+      });
+
+      document.addEventListener("cut", (e) => {
+        e.preventDefault();
+        triggerSecurityBreach("Intento de cortar el contenido detectado.");
+      });
+
+      document.addEventListener("paste", (e) => {
+        e.preventDefault();
+      });
+
+      document.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        triggerSecurityBreach(
+          "Intento de abrir el menú contextual detectado durante la prueba."
+        );
+      });
+
+      document.addEventListener("keydown", (e) => {
+        const key = e.key.toLowerCase();
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          ["c", "x", "s", "u", "p", "a"].includes(key)
+        ) {
+          e.preventDefault();
+          triggerSecurityBreach(
+            "Combinación de teclas no permitida durante la prueba."
+          );
+        }
+        if (e.key === "PrintScreen") {
+          triggerSecurityBreach(
+            "Posible intento de captura de pantalla detectado (detección limitada por el navegador)."
+          );
+        }
+      });
+
+      securityRestartBtn.addEventListener("click", () => {
+        securityOverlay.style.display = "none";
+        renderLobby();
+      });
+
+      // Inicio: mostrar sala de inicio
+      renderLobby();
+    })();
+  </script>
+</body>
+</html>
